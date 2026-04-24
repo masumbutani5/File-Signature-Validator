@@ -1,72 +1,82 @@
-# Importing os module to work with file paths and extensions
+# ==========================================================
+# File Spoof Detector - Folder Scan Only Version
+# Scans all files inside a folder
+# Checks extension vs real type using python-magic
+# ==========================================================
+
 import os
+import magic
 
 
-# Function to detect REAL file type using magic number (file signature)
-def get_file_type(file_path):
+# ----------------------------------------------------------
+# Detect real file type using python-magic
+# ----------------------------------------------------------
+def get_real_type(file_path):
 
-    # Dictionary storing known magic numbers and their file types
-    # Key = file signature in bytes
-    # Value = file type name
-    signatures = {
-        b'\x4D\x5A': 'EXE',        # "MZ" header → Windows executable file
-        b'\x25\x50\x44\x46': 'PDF', # %PDF → PDF document
-        b'\xFF\xD8\xFF': 'JPG',     # JPEG image file
-        b'\x89\x50\x4E\x47': 'PNG', # PNG image file
-        b'\x50\x4B\x03\x04': 'ZIP'  # ZIP compressed file
-    }
+    info = magic.from_file(file_path).upper()
 
-    # Open the file in binary mode (rb = read binary)
-    # Because magic numbers are stored in binary format
-    with open(file_path, 'rb') as f:
+    if "JPEG" in info:
+        return "JPG"
 
-        # Read first 4 bytes of the file (this contains the magic number)
-        file_header = f.read(4)
+    elif "PNG" in info:
+        return "PNG"
 
-    # Loop through all known signatures in dictionary
-    for sig, filetype in signatures.items():
+    elif "PDF" in info:
+        return "PDF"
 
-        # Check if file starts with this signature
-        if file_header.startswith(sig):
+    elif "ZIP" in info:
+        return "ZIP"
 
-            # If match found, return the correct file type
-            return filetype
-
-    # If no signature matches, return Unknown
-    return "Unknown"
-
-
-# Function to compare real file type with file extension
-def check_file(file_path):
-
-    # Get actual file type using magic number detection
-    real_type = get_file_type(file_path)
-
-    # Extract file extension from file name
-    # Example: "file.jpg" → "jpg"
-    extension = os.path.splitext(file_path)[1].replace('.', '').upper()
-
-    # Print file information
-    print(f"\nFile: {file_path}")
-    print(f"Extension: {extension}")
-    print(f"Detected Type: {real_type}")
-
-    # Check if file type does NOT match extension
-    # AND file type is not unknown
-    if real_type != "Unknown" and real_type != extension:
-
-        # If mismatch found → suspicious file
-        print("⚠️ Suspicious: File type mismatch detected!")
+    elif "EXECUTABLE" in info or "PE32" in info:
+        return "EXE"
 
     else:
-        # If everything matches → normal file
-        print("✅ File looks normal.")
+        return "UNKNOWN"
 
 
-# ---------------- MAIN PROGRAM ----------------
+# ----------------------------------------------------------
+# Scan all files in folder
+# ----------------------------------------------------------
+def scan_folder(folder_path):
 
-# File path to test (change this file when testing)
-file = "M:/SkinInstaller.jpg"
+    # Check if folder exists
+    if not os.path.exists(folder_path):
+        print("❌ Folder not found.")
+        return
 
-# Run the file checker function
-check_file(file)
+    print("🔍 Scanning Folder:", folder_path)
+
+    # Read all files inside folder
+    for file_name in os.listdir(folder_path):
+
+        # Create full file path
+        full_path = os.path.join(folder_path, file_name)
+
+        # Only check files, skip subfolders
+        if os.path.isfile(full_path):
+
+            # Get file extension
+            extension = os.path.splitext(full_path)[1].replace(".", "").upper()
+
+            # Detect real type
+            real_type = get_real_type(full_path)
+
+            # Print result
+            print("\n📁 File:", file_name)
+            print("Extension:", extension)
+            print("Detected :", real_type)
+
+            # Compare extension with real type
+            if extension == real_type:
+                print("✅ File looks normal.")
+            else:
+                print("⚠️ Suspicious file detected!")
+
+
+# ----------------------------------------------------------
+# MAIN PROGRAM
+# Change folder path here
+# ----------------------------------------------------------
+folder = r"M:/testingfolder"
+
+scan_folder(folder)
