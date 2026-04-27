@@ -1,0 +1,9 @@
+date_time,file_name,file_location,extension,real_type,threat_level,reasons,sha256_hash
+2026-04-27 10:03:07,japaness_home.BAT.jpg,M:/test_files\japaness_home.BAT.jpg,JPG,JPG,SUSPICIOUS,Multiple extensions,b9bbf80dd4a3b909236ad5839782b1dd4c6b93e602370b4710cf55ce087721e6
+2026-04-27 10:03:07,SkinInstaller.Copy.jpg,M:/test_files\SkinInstaller.Copy.jpg,JPG,EXE,SUSPICIOUS,Extension mismatch; Multiple extensions,4c293c445a2ea041e9f96076dc51951fe77f31d709194d4b6e31f9d3cb220f6a
+2026-04-27 10:03:07,SkinInstaller.jpg,M:/test_files\SkinInstaller.jpg,JPG,EXE,SUSPICIOUS,Extension mismatch,4c293c445a2ea041e9f96076dc51951fe77f31d709194d4b6e31f9d3cb220f6a
+2026-04-27 10:12:46,japaness_home.BAT.jpg,M:\test_files\japaness_home.BAT.jpg,JPG,JPG,SUSPICIOUS,Multiple extensions,b9bbf80dd4a3b909236ad5839782b1dd4c6b93e602370b4710cf55ce087721e6
+2026-04-27 10:12:46,SkinInstaller.Copy.jpg,M:\test_files\SkinInstaller.Copy.jpg,JPG,EXE,SUSPICIOUS,Extension mismatch; Multiple extensions,4c293c445a2ea041e9f96076dc51951fe77f31d709194d4b6e31f9d3cb220f6a
+2026-04-27 10:12:46,SkinInstaller.jpg,M:\test_files\SkinInstaller.jpg,JPG,EXE,SUSPICIOUS,Extension mismatch,4c293c445a2ea041e9f96076dc51951fe77f31d709194d4b6e31f9d3cb220f6a
+2026-04-27 10:13:34,kali-linux-2026.1-virtualbox-amd64.7z,M:\linux\kali-linux-2026.1-virtualbox-amd64.7z,7Z,UNKNOWN,SUSPICIOUS,Extension mismatch; Multiple extensions,3376d92ec19eb1843828dc5f056274fe543f49d1cf23059abd9c76f53c7a3e6a
+2026-04-27 10:13:37,metasploitable-linux-2.0.0.zip,M:\linux\metasploitable-linux-2.0.0.zip,ZIP,ZIP,SUSPICIOUS,Multiple extensions,2ae8788e95273eee87bd379a250d86ec52f286fa7fe84773a3a8f6524085a1ff

@@ -1,21 +1,20 @@
 # ==========================================================
-# File Spoof Detector + CSV Hash Database
-# Scans folder files
-# Detects extension mismatch / multiple extensions
-# Saves suspicious file hashes in CSV format
-# Detects repeated suspicious files
+# File Spoof Detector + CSV Hash Database + Scan Report + CLI
 # ==========================================================
 
 import os
+import csv
+import sys
 import magic
 import hashlib
-import csv
+from datetime import datetime
 
 
 # ----------------------------------------------------------
-# Hash database file
+# Database files
 # ----------------------------------------------------------
 HASH_DB = "known_hashes.csv"
+REPORT_FILE = "scan_report.csv"
 
 
 # ----------------------------------------------------------
@@ -27,16 +26,12 @@ def get_real_type(file_path):
 
     if "JPEG" in info:
         return "JPG"
-
     if "PNG" in info:
         return "PNG"
-
     if "PDF" in info:
         return "PDF"
-
     if "ZIP" in info:
         return "ZIP"
-
     if "EXECUTABLE" in info or "PE32" in info:
         return "EXE"
 
@@ -59,32 +54,25 @@ def get_file_hash(file_path):
     sha256 = hashlib.sha256()
 
     with open(file_path, "rb") as file:
-
-        while True:
-            chunk = file.read(4096)
-
-            if not chunk:
-                break
-
+        for chunk in iter(lambda: file.read(4096), b""):
             sha256.update(chunk)
 
     return sha256.hexdigest()
 
 
 # ----------------------------------------------------------
-# Load saved hashes from CSV
+# Load known hashes
 # ----------------------------------------------------------
 def load_hashes():
 
+    if not os.path.exists(HASH_DB):
+        return set()
+
     hashes = set()
 
-    if not os.path.exists(HASH_DB):
-        return hashes
-
     with open(HASH_DB, "r", newline="") as file:
-
         reader = csv.reader(file)
-        next(reader, None)   # Skip header
+        next(reader, None)
 
         for row in reader:
             if row:
@@ -94,21 +82,53 @@ def load_hashes():
 
 
 # ----------------------------------------------------------
-# Save new hash to CSV
+# Save suspicious hash
 # ----------------------------------------------------------
 def save_hash(file_hash, file_name):
 
-    file_exists = os.path.exists(HASH_DB)
+    new_file = not os.path.exists(HASH_DB)
 
     with open(HASH_DB, "a", newline="") as file:
-
         writer = csv.writer(file)
 
-        # Write header first time
-        if not file_exists:
+        if new_file:
             writer.writerow(["hash", "file_name"])
 
         writer.writerow([file_hash, file_name])
+
+
+# ----------------------------------------------------------
+# Save scan report
+# ----------------------------------------------------------
+def save_report(file_name, file_path, extension, real_type, level, reasons, file_hash):
+
+    new_file = not os.path.exists(REPORT_FILE)
+
+    with open(REPORT_FILE, "a", newline="") as file:
+        writer = csv.writer(file)
+
+        if new_file:
+            writer.writerow([
+                "date_time",
+                "file_name",
+                "file_location",
+                "extension",
+                "real_type",
+                "threat_level",
+                "reasons",
+                "sha256_hash"
+            ])
+
+        writer.writerow([
+            datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            file_name,
+            file_path,
+            extension,
+            real_type,
+            level,
+            reasons,
+            file_hash
+        ])
 
 
 # ----------------------------------------------------------
@@ -134,53 +154,66 @@ def scan_folder(folder_path):
         extension = os.path.splitext(file_name)[1].replace(".", "").upper()
         real_type = get_real_type(full_path)
 
-        suspicious = False
         reasons = []
 
-        # Extension mismatch check
         if extension != real_type:
-            suspicious = True
-            reasons.append("Extension does not match real file type")
+            reasons.append("Extension mismatch")
 
-        # Multiple extension check
         if has_double_extension(file_name):
-            suspicious = True
-            reasons.append("Multiple extensions found in filename")
+            reasons.append("Multiple extensions")
 
         print("\n==================================================")
-        print("FILE NAME     :", file_name)
-        print("EXTENSION     :", extension)
-        print("REAL TYPE     :", real_type)
+        print("FILE NAME    :", file_name)
+        print("LOCATION     :", full_path)
+        print("EXTENSION    :", extension)
+        print("REAL TYPE    :", real_type)
 
-        if suspicious:
+        file_hash = ""
 
-            print("THREAT LEVEL  : SUSPICIOUS")
+        if reasons:
+
+            print("THREAT LEVEL : SUSPICIOUS")
             print("REASONS:")
 
             for reason in reasons:
-                print("   -", reason)
+                print("-", reason)
 
             file_hash = get_file_hash(full_path)
-            print("SHA256 HASH   :", file_hash)
+            print("SHA256 HASH  :", file_hash)
 
             if file_hash in known_hashes:
-                print("STATUS        : Previously detected suspicious file")
-
+                print("STATUS       : Previously detected suspicious file")
             else:
                 save_hash(file_hash, file_name)
                 known_hashes.add(file_hash)
-                print("STATUS        : New suspicious hash saved to CSV")
+                print("STATUS       : New suspicious hash saved")
+
+            level = "SUSPICIOUS"
 
         else:
-            print("✅ THREAT LEVEL  : SAFE")
-            print("📌 STATUS        : No suspicious activity found")
+            print("THREAT LEVEL : SAFE")
+            print("STATUS       : No suspicious activity found")
+            level = "SAFE"
+
+        save_report(
+            file_name,
+            full_path,
+            extension,
+            real_type,
+            level,
+            "; ".join(reasons),
+            file_hash
+        )
 
         print("==================================================")
 
 
 # ----------------------------------------------------------
-# MAIN PROGRAM
+# MAIN PROGRAM (CLI)
+# Usage: python scanner.py M:/test_files
 # ----------------------------------------------------------
-folder = r"M:/test_files"
-
-scan_folder(folder)
+if len(sys.argv) < 2:
+    print("Usage: python scanner.py <folder_path>")
+else:
+    folder = sys.argv[1]
+    scan_folder(folder)
