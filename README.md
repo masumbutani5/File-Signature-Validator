@@ -20,6 +20,21 @@ This project helps identify files that may be disguised by attackers, such as an
 
 ---
 
+## Screenshots
+
+### Command Line Scan
+<img width="928" height="506" alt="Screenshot (19)" src="https://github.com/user-attachments/assets/5d174ee8-57bb-426e-9c76-5d3b9de16411" />
+
+
+### known_hashes.csv
+<img width="671" height="162" alt="Screenshot (20)" src="https://github.com/user-attachments/assets/2378fe14-abdb-45d9-987b-8be05b62756e" />
+
+
+
+### scan_report.csv
+<img width="1366" height="150" alt="Screenshot (21)" src="https://github.com/user-attachments/assets/f01898cd-3ec4-416a-a705-ea0a7b6ce2b4" />
+
+
 ## Technologies Used
 
 * Python 3
