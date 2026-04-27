@@ -1,11 +1,21 @@
 # ==========================================================
-# File Spoof Detector - Smarter Double Extension Detection
-# Safe names like: my.photo.jpg -> ignored
-# Suspicious names like: photo.jpg.exe -> detected
+# File Spoof Detector + CSV Hash Database
+# Scans folder files
+# Detects extension mismatch / multiple extensions
+# Saves suspicious file hashes in CSV format
+# Detects repeated suspicious files
 # ==========================================================
 
 import os
 import magic
+import hashlib
+import csv
+
+
+# ----------------------------------------------------------
+# Hash database file
+# ----------------------------------------------------------
+HASH_DB = "known_hashes.csv"
 
 
 # ----------------------------------------------------------
@@ -17,12 +27,16 @@ def get_real_type(file_path):
 
     if "JPEG" in info:
         return "JPG"
+
     if "PNG" in info:
         return "PNG"
+
     if "PDF" in info:
         return "PDF"
+
     if "ZIP" in info:
         return "ZIP"
+
     if "EXECUTABLE" in info or "PE32" in info:
         return "EXE"
 
@@ -30,16 +44,71 @@ def get_real_type(file_path):
 
 
 # ----------------------------------------------------------
-# Smart double extension detection
-# Detect only if final extension is dangerous
-# Example:
-# photo.jpg.exe  -> True
-# invoice.pdf.scr -> True
-# my.photo.jpg -> False
+# Detect multiple extensions
 # ----------------------------------------------------------
 def has_double_extension(file_name):
 
     return file_name.count(".") > 1
+
+
+# ----------------------------------------------------------
+# Generate SHA256 hash
+# ----------------------------------------------------------
+def get_file_hash(file_path):
+
+    sha256 = hashlib.sha256()
+
+    with open(file_path, "rb") as file:
+
+        while True:
+            chunk = file.read(4096)
+
+            if not chunk:
+                break
+
+            sha256.update(chunk)
+
+    return sha256.hexdigest()
+
+
+# ----------------------------------------------------------
+# Load saved hashes from CSV
+# ----------------------------------------------------------
+def load_hashes():
+
+    hashes = set()
+
+    if not os.path.exists(HASH_DB):
+        return hashes
+
+    with open(HASH_DB, "r", newline="") as file:
+
+        reader = csv.reader(file)
+        next(reader, None)   # Skip header
+
+        for row in reader:
+            if row:
+                hashes.add(row[0])
+
+    return hashes
+
+
+# ----------------------------------------------------------
+# Save new hash to CSV
+# ----------------------------------------------------------
+def save_hash(file_hash, file_name):
+
+    file_exists = os.path.exists(HASH_DB)
+
+    with open(HASH_DB, "a", newline="") as file:
+
+        writer = csv.writer(file)
+
+        # Write header first time
+        if not file_exists:
+            writer.writerow(["hash", "file_name"])
+
+        writer.writerow([file_hash, file_name])
 
 
 # ----------------------------------------------------------
@@ -48,10 +117,12 @@ def has_double_extension(file_name):
 def scan_folder(folder_path):
 
     if not os.path.exists(folder_path):
-        print("❌ Folder not found.")
+        print("Folder not found.")
         return
 
-    print("🔍 Scanning Folder:", folder_path)
+    known_hashes = load_hashes()
+
+    print("Scanning Folder:", folder_path)
 
     for file_name in os.listdir(folder_path):
 
@@ -63,27 +134,48 @@ def scan_folder(folder_path):
         extension = os.path.splitext(file_name)[1].replace(".", "").upper()
         real_type = get_real_type(full_path)
 
-        print("\n📁 File:", file_name)
-        print("Extension:", extension)
-        print("Detected :", real_type)
-
         suspicious = False
+        reasons = []
 
-        # Mismatch check
+        # Extension mismatch check
         if extension != real_type:
             suspicious = True
-            print("⚠️ Extension mismatch detected!")
+            reasons.append("Extension does not match real file type")
 
-        # Smart double extension check
+        # Multiple extension check
         if has_double_extension(file_name):
             suspicious = True
-            print("⚠️ Multiple extensions detected - review manually")
+            reasons.append("Multiple extensions found in filename")
 
-        # Final result
+        print("\n==================================================")
+        print("FILE NAME     :", file_name)
+        print("EXTENSION     :", extension)
+        print("REAL TYPE     :", real_type)
+
         if suspicious:
-            print("🚨 Suspicious file!")
+
+            print("THREAT LEVEL  : SUSPICIOUS")
+            print("REASONS:")
+
+            for reason in reasons:
+                print("   -", reason)
+
+            file_hash = get_file_hash(full_path)
+            print("SHA256 HASH   :", file_hash)
+
+            if file_hash in known_hashes:
+                print("STATUS        : Previously detected suspicious file")
+
+            else:
+                save_hash(file_hash, file_name)
+                known_hashes.add(file_hash)
+                print("STATUS        : New suspicious hash saved to CSV")
+
         else:
-            print("✅ File looks normal.")
+            print("✅ THREAT LEVEL  : SAFE")
+            print("📌 STATUS        : No suspicious activity found")
+
+        print("==================================================")
 
 
 # ----------------------------------------------------------
