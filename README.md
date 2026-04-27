@@ -58,13 +58,13 @@ pip install python-magic
 Run the scanner from terminal:
 
 ```bash
-python file_checker_v1.py M:/test_files
+python file_type_validator.py M:/test_files
 ```
 
 Example:
 
 ```bash
-python file_checker_v1.py C:/Users/Downloads
+python file_type_validator.py C:/Users/Downloads
 ```
 
 ---
@@ -73,7 +73,7 @@ python file_checker_v1.py C:/Users/Downloads
 
 ```text
 FILE NAME    : SkinInstaller.jpg
-LOCATION     : M:\test_files\SkinInstaller.jpg
+LOCATION     : M:\test_files\sunset.jpg
 EXTENSION    : JPG
 REAL TYPE    : EXE
 
